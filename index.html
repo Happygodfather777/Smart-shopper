@@ -1,0 +1,379 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<style>:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+body{margin:0;font:14px/1.5 system-ui,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>
+<title>CardWise Deals</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Familjen+Grotesk:wght@500;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: store switch first, then bank / category / pincode; ranked deal rows below, each reading like a bill */
+:root{
+  --bg:#f3f5f4; --surface:#ffffff; --ink:#14211f; --muted:#5b6b68; --line:#d9e1df;
+  --accent:#0f6b5c; --accent-soft:#e1f0ec; --saffron:#b86e0f; --saffron-soft:#fbefdc;
+  --bad:#b23b3b; --bad-soft:#f8e3e3;
+  --display:"Familjen Grotesk",system-ui,sans-serif;
+  --body:"IBM Plex Sans",system-ui,sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0f1716; --surface:#16211f; --ink:#e4ecea; --muted:#94a6a2; --line:#2a3836;
+  --accent:#5cc4ae; --accent-soft:#183531; --saffron:#f0a849; --saffron-soft:#3a2c17;
+  --bad:#ec8a8a; --bad-soft:#3a2020; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0f1716; --surface:#16211f; --ink:#e4ecea; --muted:#94a6a2; --line:#2a3836;
+  --accent:#5cc4ae; --accent-soft:#183531; --saffron:#f0a849; --saffron-soft:#3a2c17;
+  --bad:#ec8a8a; --bad-soft:#3a2020; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:15px;line-height:1.5}
+.wrap{max-width:1040px;margin:0 auto;padding-block:28px 48px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:grid;gap:22px}
+header h1{font-family:var(--display);font-weight:700;font-size:clamp(1.8rem,4vw,2.5rem);letter-spacing:-.02em;margin:0;text-wrap:balance}
+header h1 span{color:var(--accent)}
+header p{margin:6px 0 0;color:var(--muted);max-width:62ch}
+.filters{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:18px;display:grid;gap:16px}
+.step{font-size:.72rem;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin:0 0 6px}
+.store{display:grid;grid-template-columns:1fr 1fr;gap:8px;max-width:420px}
+.store button{font:inherit;font-family:var(--display);font-weight:700;font-size:1.1rem;padding:12px;border-radius:10px;border:1.5px solid var(--line);background:var(--bg);color:var(--ink);cursor:pointer}
+.store button[aria-pressed="true"]{border-color:var(--accent);background:var(--accent-soft);color:var(--accent)}
+.row3{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px}
+.field{display:grid;gap:6px;min-width:0;align-content:start}
+.field label{font-size:.72rem;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+select,input{font:inherit;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:10px 12px;width:100%}
+select:focus-visible,input:focus-visible,button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.hint{font-size:.8rem;color:var(--muted);min-height:1.2em}
+.hint.ok{color:var(--accent)} .hint.err{color:var(--bad)}
+.bar{display:flex;flex-wrap:wrap;gap:10px 18px;align-items:center;justify-content:space-between}
+.summary{font-size:.92rem;color:var(--muted)} .summary b{color:var(--ink)}
+.sorts{display:flex;gap:6px;flex-wrap:wrap}
+.sorts button{font:inherit;font-size:.85rem;border:1px solid var(--line);background:var(--surface);color:var(--ink);padding:6px 12px;border-radius:999px;cursor:pointer}
+.sorts button[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.toggle{display:flex;gap:8px;align-items:center;font-size:.88rem;color:var(--muted);cursor:pointer}
+.toggle input{width:auto}
+.list{display:grid;gap:10px}
+.item{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:16px 18px;display:grid;grid-template-columns:2.6rem minmax(0,1fr) auto;gap:14px;align-items:start}
+.item.na{opacity:.55}
+.rank{font-family:var(--display);font-weight:700;font-size:1.4rem;color:var(--muted);font-variant-numeric:tabular-nums}
+.item:first-child:not(.na) .rank{color:var(--saffron)}
+.name{font-weight:600;font-size:1.02rem;margin:0}
+.meta{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+.chip{font-size:.74rem;padding:2px 8px;border-radius:999px;background:var(--bg);border:1px solid var(--line);color:var(--muted)}
+.chip.live{background:var(--accent-soft);border-color:transparent;color:var(--accent);font-weight:500}
+.chip.no{background:var(--bad-soft);border-color:transparent;color:var(--bad);font-weight:500}
+.offers{display:grid;gap:6px;margin-top:10px}
+.offer{font-size:.85rem;padding:8px 10px;border-radius:8px;background:var(--accent-soft);color:var(--ink)}
+.offer.cb{background:var(--saffron-soft)}
+.offer.alt{background:transparent;border:1px dashed var(--line);color:var(--muted)}
+.offer b{font-weight:600}
+.offer .kind{font-size:.7rem;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--accent);margin-right:6px}
+.offer.cb .kind{color:var(--saffron)}
+.offer.alt .kind{color:var(--muted)}
+.offer .eligible{display:block;font-size:.8rem;color:var(--muted);margin-top:2px}
+.note{font-size:.82rem;color:var(--muted);margin-top:8px}
+.bill{font-family:var(--mono);font-size:.84rem;font-variant-numeric:tabular-nums;display:grid;grid-template-columns:auto auto;gap:2px 14px;text-align:right;white-space:nowrap}
+.bill dt{color:var(--muted);text-align:left} .bill dd{margin:0}
+.bill .strike{text-decoration:line-through;color:var(--muted)}
+.bill .minus{color:var(--accent)} .bill .cbk{color:var(--saffron)}
+.bill .total{font-family:var(--display);font-weight:700;font-size:1.25rem;border-top:1px solid var(--line);padding-top:4px;margin-top:2px}
+.bill dt.total{font-size:.84rem;font-family:var(--mono);font-weight:400;align-self:end}
+.side{display:grid;gap:10px;justify-items:end}
+.go{display:inline-flex;align-items:center;gap:6px;font-weight:600;font-size:.88rem;text-decoration:none;padding:8px 14px;border-radius:8px;background:var(--ink);color:var(--bg);white-space:nowrap}
+.go:hover{background:var(--accent)}
+.go:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.empty{background:var(--surface);border:1px dashed var(--line);border-radius:12px;padding:28px;text-align:center;color:var(--muted)}
+footer{font-size:.8rem;color:var(--muted);max-width:70ch}
+@media (max-width:640px){
+  .item{grid-template-columns:2rem minmax(0,1fr)}
+  .bill{text-align:left;justify-content:start}
+  .side{grid-column:2;justify-items:start}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>Card<span>Wise</span> Deals</h1>
+    <p>Choose where you're shopping, your bank and what you want to buy. You'll see products that deliver to your pincode, ranked by how much your bank's credit card offers save you.</p>
+  </header>
+
+  <section class="filters" aria-label="Filters">
+    <div>
+      <p class="step">1 · Where are you shopping?</p>
+      <div class="store" role="group" aria-label="Store">
+        <button type="button" id="st-Amazon" data-store="Amazon" aria-pressed="true">Amazon</button>
+        <button type="button" id="st-Flipkart" data-store="Flipkart" aria-pressed="false">Flipkart</button>
+      </div>
+    </div>
+    <div class="row3">
+      <div class="field">
+        <label for="bank">2 · Your credit card bank</label>
+        <select id="bank"></select>
+      </div>
+      <div class="field">
+        <label for="cat">3 · Category</label>
+        <select id="cat"></select>
+      </div>
+      <div class="field">
+        <label for="pin">4 · Delivery pincode</label>
+        <input id="pin" inputmode="numeric" maxlength="6" placeholder="e.g. 560001" value="781006">
+        <div class="hint" id="pinHint"></div>
+      </div>
+    </div>
+  </section>
+
+  <div class="bar">
+    <div class="summary" id="summary"></div>
+    <div class="sorts" role="group" aria-label="Sort by">
+      <button type="button" data-sort="save" aria-pressed="true">Biggest saving</button>
+      <button type="button" data-sort="pct" aria-pressed="false">Highest %</button>
+      <button type="button" data-sort="price" aria-pressed="false">Lowest price</button>
+    </div>
+  </div>
+  <label class="toggle"><input type="checkbox" id="showNa"> Also show products that don't deliver to my pincode</label>
+
+  <div class="list" id="list"></div>
+
+  <footer>Amazon smartphones show real listings, prices and bank offers checked on 20 Oct 2026 at 11:00 IST, logged out and without a pincode. Everything marked "Example data" is for demonstration only. Real bank offers change daily and depend on cart value, EMI tenure and card variant; tap "Apply" on your card on the product page to confirm before you buy. Cashback is credited later and isn't taken off at checkout.</footer>
+</div>
+
+<script>
+const BANKS = ["HDFC Bank","ICICI Bank","SBI Card","Axis Bank","Kotak Mahindra Bank","IDFC FIRST Bank","Bank of Baroda"];
+const CATS = [
+  {id:"phones", name:"Smartphones"},{id:"laptops", name:"Laptops"},
+  {id:"tvs", name:"Televisions"},{id:"audio", name:"Audio"},{id:"appliances", name:"Home appliances"},
+];
+// Offers per bank. card: null = any credit card from the bank; otherwise only that variant.
+// excl: variants of this bank left out of a bank-wide offer. kind: instant (off at checkout) or cashback (credited later).
+const OFFERS = {
+  "HDFC Bank":[
+    {store:"Amazon", cats:"all", kind:"instant", pct:10, cap:1500, min:5000, card:null},
+    {store:"Flipkart", cats:"all", kind:"cashback", pct:5, cap:1000, min:0, card:"HDFC Millennia"},
+  ],
+  "ICICI Bank":[
+    {store:"Amazon", cats:"all", kind:"cashback", pct:5, cap:Infinity, min:0, card:"Amazon Pay ICICI"},
+    {store:"Flipkart", cats:["laptops","tvs","appliances"], kind:"instant", pct:10, cap:2000, min:15000, card:null, excl:"Amazon Pay ICICI"},
+  ],
+  "SBI Card":[
+    {store:"Amazon", cats:"all", kind:"instant", pct:10, cap:1750, min:5000, card:null},
+    {store:"Amazon", cats:"all", kind:"cashback", pct:5, cap:5000, min:0, card:"SBI Cashback"},
+    {store:"Flipkart", cats:"all", kind:"cashback", pct:5, cap:5000, min:0, card:"SBI Cashback"},
+  ],
+  "Axis Bank":[
+    {store:"Flipkart", cats:"all", kind:"instant", pct:10, cap:1750, min:5000, card:null, excl:"Flipkart Axis"},
+    {store:"Flipkart", cats:"all", kind:"cashback", pct:5, cap:Infinity, min:0, card:"Flipkart Axis"},
+    {store:"Amazon", cats:"all", kind:"cashback", pct:1.5, cap:Infinity, min:0, card:"Axis Ace"},
+  ],
+  "Kotak Mahindra Bank":[
+    {store:"Amazon", cats:"all", kind:"instant", pct:10, cap:1250, min:5000, card:null},
+  ],
+  "IDFC FIRST Bank":[
+    {store:"Flipkart", cats:["phones","laptops","tvs"], kind:"instant", pct:10, cap:1500, min:10000, card:null},
+  ],
+  "Bank of Baroda":[
+    {store:"Amazon", cats:["tvs","appliances"], kind:"instant", pct:7.5, cap:1000, min:7500, card:null},
+    {store:"Flipkart", cats:"all", kind:"instant", pct:5, cap:750, min:5000, card:null},
+  ],
+};
+// Amazon Pay ICICI cashback, credited as Amazon Pay balance; amount is the "up to" figure Amazon shows.
+const AP = amt => ({bank:"ICICI Bank", card:"Amazon Pay ICICI", kind:"cashback", full:amt, emi:0, t:"Up to this amount, as Amazon Pay balance"});
+// z: first two digits of pincodes the seller ships to; "all" = pan-India.
+const METRO = ["11","12","13","40","41","56","60","50","70","38","30","20"];
+const PRODUCTS = [
+  // Amazon smartphones: real listings, prices and bank offers checked 20 Oct 2026, 11:00 IST (logged out, no pincode).
+  // full = instant discount when paying in full; emi = on card EMI. Best single offer per bank; "Additional" offers may stack, not counted.
+  ...[
+    ["Apple iPhone 16 (128 GB)", "B0DGJ7TGDR", 76999, 89900, [
+      {bank:"SBI Card", kind:"instant", full:1000, emi:3000, t:"Flat discount · min order ₹5,000"}, AP(2309)]],
+    ["Apple iPhone 17e (256 GB)", "B0GQVL6STN", 71999, 79900, [
+      {bank:"SBI Card", kind:"instant", full:3000, emi:3500, t:"Flat discount · min order ₹5,000"}, AP(2159)]],
+    ["Samsung Galaxy S25 Ultra (12/256 GB)", "B0DSKL9MQ8", 94999, 129999, [
+      {bank:"SBI Card", kind:"instant", full:50, emi:500, t:"Flat discount"}, AP(2849)]],
+    ["vivo S2 FE 5G (6/128 GB)", "B0HJZZ63Y7", 38999, 65999, [
+      {bank:"HDFC Bank", kind:"instant", full:1950, emi:3900, t:"Flat discount · min order ₹5,000"},
+      {bank:"ICICI Bank", kind:"instant", full:1950, emi:3900, t:"Flat discount · min order ₹5,000"},
+      {bank:"Axis Bank", kind:"instant", full:1950, emi:3900, t:"Flat discount · min order ₹5,000"},
+      {bank:"SBI Card", kind:"instant", full:950, emi:2650, t:"Flat discount · min order ₹5,000"}, AP(1169)]],
+    ["OnePlus Nord CE6 Lite (8/128 GB)", "B0GVYXPZBS", 28499, 33999, [
+      {bank:"SBI Card", kind:"instant", full:750, emi:1000, t:"10%, max ₹750 in full / ₹1,000 on EMI"},
+      {bank:"HDFC Bank", kind:"instant", full:0, emi:50, t:"Flat discount · min order ₹2,490"}, AP(854)]],
+    ["iQOO Z11xa 5G (8/128 GB)", "B0HG929FR4", 28998, 40999, [
+      {bank:"SBI Card", kind:"instant", full:750, emi:1000, t:"10%, max ₹750 in full / ₹1,000 on EMI"},
+      {bank:"HDFC Bank", kind:"instant", full:0, emi:50, t:"Flat discount · min order ₹2,490"}, AP(869)]],
+    ["OnePlus N6 (6/128 GB)", "B0H3LGB59B", 24999, 33990, [
+      {bank:"SBI Card", kind:"instant", full:750, emi:1000, t:"10%, max ₹750 in full / ₹1,000 on EMI"},
+      {bank:"HDFC Bank", kind:"instant", full:0, emi:50, t:"Flat discount · min order ₹2,490"}, AP(749)]],
+    ["Samsung Galaxy M47 5G (6/128 GB)", "B0H4L5T84X", 26999, 46999, [AP(809)]],
+    ["Samsung Galaxy M36 5G (6/128 GB)", "B0FDBB2VRC", 22999, 25499, [AP(689)]],
+    ["Motorola G57 Power 5G (8/128 GB)", "B0G3TFPN94", 21999, 24999, [AP(659)]],
+    ["Redmi 15C 5G Prime Edition (6/128 GB)", "B0G2BBWKCP", 17999, 31999, [AP(539)]],
+  ].map(([n, asin, price, mrp, offers]) => ({n, c:"phones", s:"Amazon", price, mrp, z:"all", offers,
+      url:`https://www.amazon.in/dp/${asin}`, checked:"20 Oct, 11:00 IST"})),
+  {n:"OnePlus 13R (12/256 GB)", c:"phones", s:"Flipkart", price:42999, mrp:44999, z:"all"},
+  {n:"iPhone 16 (128 GB)", c:"phones", s:"Flipkart", price:66999, mrp:79900, z:"all"},
+  {n:"Nothing Phone (3a)", c:"phones", s:"Flipkart", price:24999, mrp:27999, z:"all"},
+  {n:"Google Pixel 9a", c:"phones", s:"Flipkart", price:44999, mrp:49999, z:METRO},
+  {n:"MacBook Air M4 13\" (16/256 GB)", c:"laptops", s:"Amazon", price:94990, mrp:99900, z:"all"},
+  {n:"Acer Nitro V 15 (RTX 4050)", c:"laptops", s:"Amazon", price:72990, mrp:99999, z:"all"},
+  {n:"HP 15 (Ryzen 5, 16 GB)", c:"laptops", s:"Amazon", price:46990, mrp:61000, z:METRO},
+  {n:"ASUS Vivobook 16 (Ryzen 7, 16 GB)", c:"laptops", s:"Flipkart", price:58990, mrp:79990, z:"all"},
+  {n:"Lenovo IdeaPad Slim 3 (i5, 16 GB)", c:"laptops", s:"Flipkart", price:52990, mrp:76490, z:"all"},
+  {n:"MacBook Air M4 13\" (16/256 GB)", c:"laptops", s:"Flipkart", price:92990, mrp:99900, z:"all"},
+  {n:"Sony Bravia 55\" 4K Google TV", c:"tvs", s:"Amazon", price:57990, mrp:99900, z:[...METRO,"78","75","80"]},
+  {n:"LG 65\" OLED evo C5", c:"tvs", s:"Amazon", price:184990, mrp:274990, z:METRO},
+  {n:"Samsung 43\" Crystal 4K", c:"tvs", s:"Flipkart", price:27990, mrp:41900, z:"all"},
+  {n:"Xiaomi 50\" FX Pro QLED", c:"tvs", s:"Flipkart", price:29999, mrp:42999, z:"all"},
+  {n:"TCL 55\" QD-Mini LED", c:"tvs", s:"Flipkart", price:44990, mrp:84990, z:[...METRO,"78"]},
+  {n:"Sony WH-1000XM5", c:"audio", s:"Amazon", price:24990, mrp:34990, z:"all"},
+  {n:"JBL Charge 5", c:"audio", s:"Amazon", price:13999, mrp:18999, z:"all"},
+  {n:"Apple AirPods Pro 2", c:"audio", s:"Flipkart", price:19999, mrp:24900, z:"all"},
+  {n:"boAt Nirvana Ion ANC", c:"audio", s:"Flipkart", price:2299, mrp:7990, z:"all"},
+  {n:"LG 1.5 Ton 5★ Inverter Split AC", c:"appliances", s:"Amazon", price:43990, mrp:78990, z:[...METRO,"78","75"]},
+  {n:"Dyson V12 Detect Slim", c:"appliances", s:"Amazon", price:54900, mrp:62900, z:METRO},
+  {n:"Samsung 8 kg Front Load Washer", c:"appliances", s:"Flipkart", price:32990, mrp:45990, z:"all"},
+  {n:"Whirlpool 265 L Frost-Free Fridge", c:"appliances", s:"Flipkart", price:27490, mrp:34500, z:[...METRO,"78"]},
+];
+const ZONES = {"11":"Delhi","12":"Haryana","13":"Haryana / Punjab","14":"Punjab","19":"Jammu & Kashmir","20":"Uttar Pradesh","30":"Rajasthan","38":"Gujarat","40":"Maharashtra","41":"Maharashtra","50":"Telangana","56":"Karnataka","60":"Tamil Nadu","68":"Kerala","70":"West Bengal","75":"Odisha","78":"Assam / North East","79":"North East","80":"Bihar"};
+
+const $ = id => document.getElementById(id);
+const inr = v => "₹" + Math.round(v).toLocaleString("en-IN");
+BANKS.forEach(b => $("bank").add(new Option(b, b)));
+CATS.forEach(c => $("cat").add(new Option(c.name, c.id)));
+$("cat").add(new Option("All categories", "all"), 0);
+$("cat").value = "all";
+let store = "Amazon", sortBy = "save";
+
+// Every offer from a bank on this product. Live products carry their own checked offers
+// (full payment and card EMI amounts); example products use the bank-wide rules above.
+function offersFor(bank, prod){
+  if (prod.offers){
+    const list = [];
+    for (const o of prod.offers.filter(o => o.bank === bank)){
+      if (o.full) list.push({kind:o.kind, card:o.card, excl:o.excl, amt:o.full, mode:"full", t:o.t, live:true});
+      if (o.emi) list.push({kind:o.kind, card:o.card, excl:o.excl, amt:o.emi, mode:"emi", t:o.t, live:true});
+    }
+    return list.sort((a,b) => b.amt - a.amt);
+  }
+  return (OFFERS[bank] || [])
+    .filter(o => o.store === prod.s && (o.cats === "all" || o.cats.includes(prod.c)) && prod.price >= o.min)
+    .map(o => ({...o, amt: Math.min(prod.price * o.pct / 100, o.cap), mode:"full"}))
+    .sort((a,b) => b.amt - a.amt);
+}
+// Headline offer = best when paying in full (sets the price shown); alt = a bigger EMI offer, or the runner-up.
+function pick(list){
+  const full = list.filter(o => o.mode === "full"), emi = list.filter(o => o.mode === "emi");
+  const best = full[0] || null;
+  const alt = emi[0] && (!best || emi[0].amt > best.amt) ? emi[0] : full[1] || null;
+  return {best, alt};
+}
+function bestOtherBank(bank, prod){
+  let best = null;
+  for (const b of BANKS){
+    if (b === bank) continue;
+    const o = pick(offersFor(b, prod)).best;
+    if (o && (!best || o.amt > best.amt)) best = {...o, bank:b};
+  }
+  return best;
+}
+// Listing link: a product's own url when known, otherwise a search for it on that store.
+function listingUrl(p){
+  if (p.url) return p.url;
+  const q = encodeURIComponent(p.n);
+  return p.s === "Amazon" ? `https://www.amazon.in/s?k=${q}` : `https://www.flipkart.com/search?q=${q}`;
+}
+const delivers = (prod, pin) => prod.z === "all" || prod.z.includes(pin.slice(0,2));
+function terms(o){
+  if (o.t) return o.t;
+  if (!o.pct) return "";
+  const t = [o.pct + "%"];
+  if (isFinite(o.cap)) t.push("max " + inr(o.cap));
+  if (o.min) t.push("min order " + inr(o.min));
+  return t.join(" · ");
+}
+function eligible(o, bank){
+  if (o.card) return `Only on the ${o.card} credit card`;
+  return `Any ${bank} credit card` + (o.excl ? ` (not ${o.excl})` : "");
+}
+function offerBox(o, bank, alt){
+  const label = o.mode === "emi" ? (o.kind === "instant" ? "On card EMI" : "Cashback on EMI")
+    : o.kind === "instant" ? "Instant discount" : "Cashback";
+  const verb = o.kind === "instant" ? "off" : "back";
+  const tt = terms(o);
+  const elig = eligible(o, bank) + (o.mode === "emi" ? " · pay on EMI" : o.live && o.kind === "instant" ? " · pay in full" : "");
+  return `<div class="offer${alt ? " alt" : o.kind==="cashback" ? " cb" : ""}">
+    <span class="kind">${alt ? "Also: " + label : label}</span><b>${inr(o.amt)} ${verb}</b>${tt ? " · " + tt : ""}
+    <span class="eligible">${elig}</span></div>`;
+}
+
+function render(){
+  const bank = $("bank").value, cat = $("cat").value;
+  const pin = $("pin").value.replace(/\D/g,"");
+  const pinOk = /^[1-9]\d{5}$/.test(pin);
+  const hint = $("pinHint");
+  if (!pin){ hint.textContent = "Enter a pincode to check delivery"; hint.className = "hint"; }
+  else if (!pinOk){ hint.textContent = "Pincodes have 6 digits and don't start with 0"; hint.className = "hint err"; }
+  else { hint.textContent = "Delivering to " + (ZONES[pin.slice(0,2)] || "pincode " + pin); hint.className = "hint ok"; }
+
+  let rows = PRODUCTS.filter(p => p.s === store && (cat === "all" || p.c === cat)).map(p => {
+    const {best: o, alt} = pick(offersFor(bank, p));
+    const instant = o && o.kind === "instant" ? o.amt : 0;
+    const cash = o && o.kind === "cashback" ? o.amt : 0;
+    const pay = p.price - instant, save = instant + cash;
+    return {p, o, alt, instant, cash, pay, net: pay - cash, save, pct: save / p.price * 100,
+            ok: pinOk ? delivers(p, pin) : true, other: bestOtherBank(bank, p)};
+  });
+  const deliverable = rows.filter(r => r.ok);
+  const withOffer = deliverable.filter(r => r.o || r.alt).length;
+  if (!$("showNa").checked) rows = deliverable;
+
+  const key = {save: r => -r.save, pct: r => -r.pct, price: r => r.net}[sortBy];
+  rows.sort((a,b) => (b.ok - a.ok) || (!!b.o - !!a.o) || key(a) - key(b));
+
+  $("summary").innerHTML = `<b>${withOffer}</b> of ${deliverable.length} ${store} products that deliver to you have a ${bank} offer`;
+
+  if (!rows.length){
+    $("list").innerHTML = `<div class="empty">No ${store} products here deliver to ${pin}. Try another category, or tick the box above to see them anyway.</div>`;
+    return;
+  }
+  $("list").innerHTML = rows.map((r, i) => {
+    const {p, o} = r;
+    const chipList = [p.checked ? `<span class="chip live">Checked ${p.checked}</span>` : `<span class="chip">Example data</span>`];
+    if (!r.ok) chipList.push(`<span class="chip no">Doesn't deliver to ${pin}</span>`);
+    const chips = `<div class="meta">${chipList.join("")}</div>`;
+    const offers = o
+      ? `<div class="offers">${offerBox(o, bank)}${r.alt ? offerBox(r.alt, bank, true) : ""}</div>`
+      : r.alt
+      ? `<div class="offers"><div class="offer alt">No ${bank} offer when paying in full.</div>${offerBox(r.alt, bank)}</div>`
+      : `<div class="offers"><div class="offer alt">No ${bank} credit card offer on this product right now.</div></div>`;
+    const note = r.other && r.other.amt > r.save + 1
+      ? `<div class="note">${r.other.bank} cards save more here: ${inr(r.other.amt)} ${r.other.kind === "instant" ? "off" : "cashback"}${r.other.card ? " (" + r.other.card + ")" : ""}.</div>` : "";
+    const bill = `<dl class="bill">
+      ${p.mrp > p.price ? `<dt>MRP</dt><dd class="strike">${inr(p.mrp)}</dd>` : ""}
+      <dt>Price</dt><dd>${inr(p.price)}</dd>
+      ${r.instant ? `<dt>Bank discount</dt><dd class="minus">−${inr(r.instant)}</dd>` : ""}
+      <dt class="total">You pay</dt><dd class="total">${inr(r.pay)}</dd>
+      ${r.cash ? `<dt>Cashback later</dt><dd class="cbk">−${inr(r.cash)}</dd><dt>Net cost</dt><dd>${inr(r.net)}</dd>` : ""}
+    </dl>`;
+    return `<article class="item${r.ok ? "" : " na"}">
+      <div class="rank">${String(i + 1).padStart(2, "0")}</div>
+      <div style="min-width:0"><h3 class="name">${p.n}</h3>${chips}${offers}${note}</div>
+      <div class="side">${bill}<a class="go" href="${listingUrl(p)}" target="_blank" rel="noopener noreferrer">View on ${p.s} ↗</a></div>
+    </article>`;
+  }).join("");
+}
+
+document.querySelectorAll(".store button").forEach(b => b.addEventListener("click", () => {
+  store = b.dataset.store;
+  document.querySelectorAll(".store button").forEach(x => x.setAttribute("aria-pressed", x === b));
+  render();
+}));
+document.querySelectorAll(".sorts button").forEach(b => b.addEventListener("click", () => {
+  sortBy = b.dataset.sort;
+  document.querySelectorAll(".sorts button").forEach(x => x.setAttribute("aria-pressed", x === b));
+  render();
+}));
+["bank","cat","pin","showNa"].forEach(id => $(id).addEventListener("input", render));
+render();
+</script>
+</body>
+</html>
